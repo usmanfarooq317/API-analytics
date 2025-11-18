@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>API Analytics</title>
+
+    <style>
+        .env-buttons {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .env-buttons button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            background: #ddd;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 6px;
+        }
+
+        .env-buttons .active {
+            background: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+
+    <script>
+        const currentEnv = "{{ environment }}"; // staging or production
+
+        // Mark active button
+        window.onload = () => {
+            const stagingBtn = document.getElementById("btn-staging");
+            const prodBtn = document.getElementById("btn-production");
+
+            if (currentEnv === "production") {
+                prodBtn.classList.add("active");
+            } else {
+                stagingBtn.classList.add("active");
+            }
+
+            // Fill dropdowns dynamically
+            const appList = document.getElementById("app_names");
+            const orgList = document.getElementById("org_names");
+            Object.entries(appOrgMap).forEach(([app, org]) => {
+                const appOpt = document.createElement("option");
+                appOpt.value = app;
+                appList.appendChild(appOpt);
+
+                const orgOpt = document.createElement("option");
+                orgOpt.value = org;
+                orgList.appendChild(orgOpt);
+            });
+        };
+
+        // App/Org map
+        const appOrgMap = {
+            "BlueEX Limited": "Blue-ex",
+            "LoanLado": "ICMAP",
+            "finova_tech": "Finova Tech",
+            "PaisaGo": "Quark",
+            "KhushiConnect": "Khushi Connect",
+            "SAHARA": "Awami Financials",
+            "info_digit": "infodigit",
+            "payplus Prod": "PayPlus",
+            "Awan": "AwanPay",
+            "INSPIREINNO": "INSPIREINNO",
+            "AppTest": "ArcanaInfo",
+            "Swich Retail": "Switch",
+            "EFZH-P": "EFZH",
+            "agreggagateway": "agregga",
+            "martbox": "martbox",
+            "Dukan": "dukan",
+            "apiprdstoreblend": "storeblend",
+            "ENext app": "ENEXT",
+            "Monotech": "Mono Tech",
+            "Superpay": "superpay",
+            "WAU TECH": "WAU Technologies",
+            "apiprdshopsphere": "SHOPSPHERE",
+            "GEEKGURU": "geekguru",
+            "apigdigitease": "DIGITEASE",
+            "apigiconnect": "iconnect",
+            "Essa Soft Solutions": "Essasoft",
+            "Crown ONE": "Crown App",
+            "TRAX Production": "Trax",
+            "Pique_pulse App": "Pique pulse",
+            "Savyways App": "Savyways",
+            "visioncred": "Visioncred",
+            "greenapp": "GreenApp",
+            "make_disbursements": "Linx Tech",
+            "quantumbyte": "QuantumByte",
+            "apigprdredfeet": "RedFeet",
+            "Client AZK": "zanitha",
+            "Glintglide App": "GlintGlide",
+            "Quickquake App": "QuickQuake",
+            "Nova Connect": "NovaConnect",
+            "apigprdcartfirst": "CartFirst",
+            "apigadonai": "Adonai",
+            "apigdigikhata": "apigdigikhata",
+            "apigprdposalepay": "Posale",
+            "Fluxify App": "Fluxify",
+            "ZenForge App": "Zenforge",
+            "apigprodquwat": "Quwat",
+            "ABH ecommerce": "ABH",
+            "Pixel Code App": "Pixel",
+            "moneytapapig": "Money Tap",
+            "TrarixaApp": "Trarixa",
+            "ImpexipleApp": "Impexiple",
+            "apigprdtruebliss": "Truebliss",
+            "DEVTECTS DISBURSMENT API": "Devtects",
+            "Impeltech": "Impeltech",
+            "apigpaismodisburse": "Paismo",
+            "simpaisa_01": "Simpaisa HC",
+            "Simpaisa": "Simpaisa HC",
+            "FauriCash": "Finance@pakisnova.com",
+            "apigbykea": "bykea",
+            "apigqwalee": "QWALEE",
+            "apigajar": "ajar",
+            "apigmultiverse": "Multiverse",
+            "apigkarotech": "karotech",
+            "4SightEasypaisa": "4sight",
+            "apigMg": "Ecom",
+            "apigFinjaLendingServicesLimited": "Finja",
+            "Easypasia OPS": "Easypaisa OPS",
+            "apigNaseebOnline": "Naseeb online",
+            "apig_esquare_hris": "ESquare",
+            "APIGPayPlus": "apigprdpayplus",
+            "zingtechprdgateway": "CBA",
+            "Abhi": "Abhi",
+            "Cash Disbursement - KhaleefTech": "Khaleeftech",
+            "SnappRetail": "snapretails",
+            "apigecofinjorr": "ecofin",
+            "apigpakretails": "apigpakretails",
+            "APIgVizpro": "vizpro",
+            "apigprdezzyapp": "apigprdezzyapp",
+            "apigtstgmicrocred": "Microcred",
+            "Paisayaar": "Jinglecred",
+            "apigstgsafepay": "safepay",
+            "TheDynamics": "dynamics",
+            "apigcreditbook": "Creditbook",
+            "SmartQarza": "GOLDLION",
+            "Sarmayaprdgateway": "sarmayaprdgateway",
+            "apigprdtext": "textltd",
+            "Apigprdconnect": "ConnectDotNet",
+            "apigprdsimpaisa": "simpaisa",
+            "Apigprdmarkaz": "Markaz",
+            "apigprdhumraah": "Humraah"
+        };
+
+        const orgAppMap = Object.fromEntries(Object.entries(appOrgMap).map(([k, v]) => [v.toLowerCase(), k]));
+
+        function autoFillFields(changedField) {
+            const appNameInput = document.querySelector('input[name="app_name"]');
+            const orgNameInput = document.querySelector('input[name="org_name"]');
+
+            if (changedField === 'app') {
+                const appName = appNameInput.value.trim();
+                if (appOrgMap[appName]) orgNameInput.value = appOrgMap[appName];
+            } else if (changedField === 'org') {
+                const orgName = orgNameInput.value.trim().toLowerCase();
+                if (orgAppMap[orgName]) appNameInput.value = orgAppMap[orgName];
+            }
+        }
+
+        function switchEnv(env) {
+            window.location.href = "/analytics?env=" + env;
+        }
+    </script>
+</head>
+
+<body>
+
+    <!-- Environment Buttons -->
+    <div class="env-buttons">
+        <button id="btn-staging" onclick="switchEnv('staging')">Staging</button>
+        <button id="btn-production" onclick="switchEnv('production')">Production</button>
+    </div>
+
+    <h1>API Analytics Filters</h1>
+
+    <form method="POST">
+
+        <!-- Hidden Environment Field -->
+        <input type="hidden" name="environment" value="{{ environment }}">
+
+        <!-- Timeframe -->
+        <label>Timeframe:</label>
+        <select name="timeframe">
+            <option value="1m">Last 1 minute</option>
+            <option value="5m">Last 5 minutes</option>
+            <option value="15m">Last 15 minutes</option>
+            <option value="1h">Last 1 hour</option>
+            <option value="4h">Last 4 hours</option>
+            <option value="12h">Last 12 hours</option>
+            <option value="24h" selected>Last 24 hours</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+        </select>
+
+        <br><br>
+
+        <!-- App Name -->
+        <label>App Name:</label>
+        <input list="app_names" name="app_name" placeholder="Select or type App Name"
+            oninput="autoFillFields('app')">
+        <datalist id="app_names"></datalist>
+
+        <br><br>
+
+        <!-- Org Name -->
+        <label>Org Name:</label>
+        <input list="org_names" name="org_name" placeholder="Select or type Org Name"
+            oninput="autoFillFields('org')">
+        <datalist id="org_names"></datalist>
+
+        <br><br>
+
+        <!-- API Name -->
+        <label><input type="checkbox" name="use_api_name"> API Name:</label>
+        <input list="api_names" name="api_name" placeholder="Select or type API Name">
+        <datalist id="api_names">
+            <option value="mobile-transfer-p2p-api">
+            <option value="CorporateLogin">
+            <option value="cnic-to-ma">
+            <option value="ret-bvs-login-api">
+            <option value="cash-deposit-bvs-api">
+            <option value="sub-ibft-api">
+            <option value="corporate-solution-corporate-login">
+            <option value="account-balance">
+            <option value="bvs-acct-reg-api">
+            <option value="ep-acct-reg-api">
+            <option value="transaction-status-inquiry">
+            <option value="login">
+            <option value="matomerchant">
+            <option value="utilities">
+            <option value="cash-deposit-non-bvs-api">
+            <option value="sub-bill-payments-api">
+            <option value="cash-withdrawal-bvs-api">
+        </datalist>
+
+        <br><br>
+
+        <!-- API Resource ID -->
+        <label><input type="checkbox" name="use_api_resource_id"> API Resource ID:</label>
+        <input list="api_resource_ids" name="api_resource_id" placeholder="Enter API Resource ID or select">
+        <datalist id="api_resource_ids">
+            <option value="Inquiry">
+            <option value="Transfer">
+        </datalist>
+
+        <br><br>
+
+        <!-- Global Txn ID -->
+        <label><input type="checkbox" name="use_global_transaction_id"> Global Transaction ID:</label>
+        <input type="text" name="global_transaction_id">
+
+        <br><br>
+
+        <!-- Request Body -->
+        <label><input type="checkbox" name="use_request_body"> Request Body:</label>
+        <input type="text" name="request_body">
+
+        <br><br>
+
+        <!-- Response Body -->
+        <label><input type="checkbox" name="use_response_body"> Response Body:</label>
+        <input type="text" name="response_body">
+
+        <br><br>
+
+        <button type="submit">Fetch Analytics</button>
+    </form>
+
+    <h2>Response:</h2>
+    <pre>{{ response | tojson(indent=2) }}</pre>
+
+</body>
+
+</html>
