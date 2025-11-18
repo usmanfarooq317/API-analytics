@@ -57,7 +57,7 @@ def get_token():
 def analytics():
 
     # Determine environment
-    env = request.args.get("env") or request.form.get("environment") or "staging"
+    env = request.args.get("env") or request.form.get("environment") or "production"
 
     ANALYTICS_URL = URL_STAGING if env == "staging" else URL_PRODUCTION
 
