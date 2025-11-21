@@ -108,7 +108,7 @@ def analytics():
         # Required fields
         params["fields"] = (
             "api_name,app_name,global_transaction_id,api_resource_id,"
-            "request_body,response_body,timeframe,time_to_serve_request"
+            "request_body,response_body,timeframe,time_to_serve_request,status_code"
         )
 
         # Fetch token
