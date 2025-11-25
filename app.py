@@ -26,7 +26,8 @@ TIMEFRAME_MAP = {
     "12h": "last12hours",
     "24h": "last24hours",
     "7d": "last7days",
-    "30d": "last30days"
+    "30d": "last30days",
+    "all": "all-event"
 }
 
 def get_token():
