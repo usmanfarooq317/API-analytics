@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 import requests
 import time
+from collections import OrderedDict
 
 app = Flask(__name__)
 
@@ -27,7 +28,7 @@ TIMEFRAME_MAP = {
     "24h": "last24hours",
     "7d": "last7days",
     "30d": "last30days",
-    "all": "all-event"
+    "all-event": "all-event"
 }
 
 def get_token():
@@ -36,14 +37,9 @@ def get_token():
     if cached_token and time.time() < token_expiry:
         return cached_token
 
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "application/json"
-    }
-    data = {
-        "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
-        "apikey": API_KEY
-    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"}
+    data = {"grant_type": "urn:ibm:params:oauth:grant-type:apikey", "apikey": API_KEY}
+
     res = requests.post(TOKEN_URL, headers=headers, data=data)
     res.raise_for_status()
     token_data = res.json()
@@ -56,10 +52,8 @@ def get_token():
 
 @app.route("/analytics", methods=["GET", "POST"])
 def analytics():
-
     # Determine environment
     env = request.args.get("env") or request.form.get("environment") or "production"
-
     ANALYTICS_URL = URL_STAGING if env == "staging" else URL_PRODUCTION
 
     response_data = None
@@ -69,8 +63,7 @@ def analytics():
 
         # Timeframe
         timeframe = request.form.get("timeframe")
-        if timeframe in TIMEFRAME_MAP:
-            params["timeframe"] = TIMEFRAME_MAP[timeframe]
+        params["timeframe"] = TIMEFRAME_MAP.get(timeframe, "last24hours")
 
         # App Name
         if request.form.get("app_name"):
@@ -82,7 +75,7 @@ def analytics():
             if api_name:
                 params["api_name"] = f"equals:{api_name}"
 
-        # Global Transaction ID
+        # Global Txn ID
         if request.form.get("use_global_transaction_id"):
             gtid = request.form.get("global_transaction_id")
             if gtid:
@@ -96,23 +89,23 @@ def analytics():
 
         # Request Body
         if request.form.get("use_request_body"):
-            request_body = request.form.get("request_body")
-            if request_body:
-                params["request_body"] = f"contains:{request_body}"
+            req_body = request.form.get("request_body")
+            if req_body:
+                params["request_body"] = f"contains:{req_body}"
 
         # Response Body
         if request.form.get("use_response_body"):
-            response_body = request.form.get("response_body")
-            if response_body:
-                params["response_body"] = f"contains:{response_body}"
+            res_body = request.form.get("response_body")
+            if res_body:
+                params["response_body"] = f"contains:{res_body}"
 
-        # Required fields
+        # Fields to fetch
         params["fields"] = (
-            "api_name,app_name,global_transaction_id,api_resource_id,"
-            "request_body,response_body,timeframe,time_to_serve_request,status_code"
+            "api_name,api_resource_id,app_name,request_http_headers,datetime,"
+            "global_transaction_id,request_body,response_body,status_code,"
+            "time_to_serve_request"
         )
 
-        # Fetch token
         try:
             token = get_token()
         except Exception as e:
@@ -123,7 +116,41 @@ def analytics():
         try:
             res = requests.get(ANALYTICS_URL, headers=headers, params=params)
             res.raise_for_status()
-            response_data = res.json()
+
+            raw = res.json()
+            events = raw.get("events", [])
+
+            reordered_events = []
+
+            for ev in events:
+                # Extract X-Channel from headers array
+                x_channel = None
+                for header in ev.get("request_http_headers", []):
+                    if "X-Channel" in header:
+                        x_channel = header["X-Channel"]
+                        break
+
+                # Remove existing X-Channel in API response to avoid duplicates
+                if "X-Channel" in ev:
+                    del ev["X-Channel"]
+
+                # Build ordered dict
+                ordered = OrderedDict()
+                ordered["api_name"] = ev.get("api_name")
+                ordered["api_resource_id"] = ev.get("api_resource_id")
+                ordered["app_name"] = ev.get("app_name")
+                ordered["X-Channel"] = x_channel
+                ordered["datetime"] = ev.get("datetime")
+                ordered["global_transaction_id"] = ev.get("global_transaction_id")
+                ordered["request_body"] = ev.get("request_body")
+                ordered["response_body"] = ev.get("response_body")
+                ordered["status_code"] = ev.get("status_code")
+                ordered["time_to_serve_request"] = ev.get("time_to_serve_request")
+
+                reordered_events.append(ordered)
+
+            response_data = {"events": reordered_events}
+
         except Exception as e:
             response_data = {"error": str(e)}
 
