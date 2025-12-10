@@ -65,26 +65,27 @@ pipeline {
         }
 
         stage('Deploy to EC2') {
-            steps {
-                sshagent(['ec2-ssh-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} '
-                        # Stop and remove container if exists
-                        docker rm -f api-analytics 2>/dev/null || true
+    steps {
+        sshagent(['ec2-ssh-key']) {
+            sh """
+            ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} '
+                # Kill any process using port 5000
+                fuser -k 5000/tcp || true
 
-                        # Kill any process using port 5000
-                        fuser -k 5000/tcp || true
+                # Stop and remove container if exists
+                docker ps -q --filter "name=api-analytics" | grep -q . && docker rm -f api-analytics || true
 
-                        # Pull latest image
-                        docker pull ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}
+                # Pull latest image
+                docker pull ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}
 
-                        # Run new container
-                        docker run -d --name api-analytics -p 5000:5000 ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}
-                    '
-                    """
-                }
-            }
+                # Run new container
+                docker run -d --name api-analytics -p 5000:5000 ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}
+            '
+            """
         }
+    }
+}
+
     }
 
     post {
