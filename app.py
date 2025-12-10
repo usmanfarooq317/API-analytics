@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 import requests
 import time
 from collections import OrderedDict
+from datetime import datetime, timezone, timedelta
 
 app = Flask(__name__)
 
@@ -123,24 +124,31 @@ def analytics():
             reordered_events = []
 
             for ev in events:
-                # Extract X-Channel from headers array
+                # Extract X-Channel
                 x_channel = None
                 for header in ev.get("request_http_headers", []):
                     if "X-Channel" in header:
                         x_channel = header["X-Channel"]
                         break
 
-                # Remove existing X-Channel in API response to avoid duplicates
-                if "X-Channel" in ev:
-                    del ev["X-Channel"]
+                # Convert UTC datetime → Pakistan time + AM/PM
+                original_dt = ev.get("datetime")
+                formatted_dt = None
 
-                # Build ordered dict
+                if original_dt:
+                    try:
+                        utc_dt = datetime.fromisoformat(original_dt.replace("Z", "+00:00"))
+                        pk_dt = utc_dt.astimezone(timezone(timedelta(hours=5)))
+                        formatted_dt = pk_dt.strftime("%Y-%m-%d %I:%M:%S %p")
+                    except:
+                        formatted_dt = original_dt
+
                 ordered = OrderedDict()
                 ordered["api_name"] = ev.get("api_name")
                 ordered["api_resource_id"] = ev.get("api_resource_id")
                 ordered["app_name"] = ev.get("app_name")
                 ordered["X-Channel"] = x_channel
-                ordered["datetime"] = ev.get("datetime")
+                ordered["datetime"] = formatted_dt
                 ordered["global_transaction_id"] = ev.get("global_transaction_id")
                 ordered["request_body"] = ev.get("request_body")
                 ordered["response_body"] = ev.get("response_body")
@@ -159,3 +167,4 @@ def analytics():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
