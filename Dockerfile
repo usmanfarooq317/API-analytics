@@ -5,9 +5,10 @@ WORKDIR /app
 
 # Copy requirements file and install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt python-dotenv
 
-# Copy the application code
+# Copy .env file and application code
+COPY .env .env
 COPY . .
 
 # Expose Flask default port
