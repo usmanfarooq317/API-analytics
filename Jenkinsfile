@@ -81,7 +81,7 @@ pipeline {
                 docker pull ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}
 
                 # Run new container
-                docker run -d --name api-analytics -p 5000:5000 ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}
+                docker run -d --name api-analytics -p 5000:5000 --env-file /home/ubuntu/.env ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}
             '
             """
         }
