@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 import requests
 import time
+from datetime import datetime, timedelta
 from collections import OrderedDict
 
 app = Flask(__name__)
@@ -123,6 +124,15 @@ def analytics():
             reordered_events = []
 
             for ev in events:
+                # Convert datetime to UTC+5 in-place
+                datetime_str = ev.get("datetime")
+                if datetime_str:
+                    try:
+                        utc_dt = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+                        ev["datetime"] = (utc_dt + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
+                    except Exception:
+                        pass
+
                 # Extract X-Channel from headers array
                 x_channel = None
                 for header in ev.get("request_http_headers", []):
@@ -140,7 +150,7 @@ def analytics():
                 ordered["api_resource_id"] = ev.get("api_resource_id")
                 ordered["app_name"] = ev.get("app_name")
                 ordered["X-Channel"] = x_channel
-                ordered["datetime"] = ev.get("datetime")
+                ordered["datetime"] = ev.get("datetime")  # Already converted
                 ordered["global_transaction_id"] = ev.get("global_transaction_id")
                 ordered["request_body"] = ev.get("request_body")
                 ordered["response_body"] = ev.get("response_body")

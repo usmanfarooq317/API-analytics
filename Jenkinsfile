@@ -61,9 +61,9 @@ pipeline {
             steps {
                 script {
                     try {
-                        sshagent(['usman-ec2-key']) {   // <-- change to new Jenkins SSH credential ID
+                        sshagent(['moiz-ec2-key']) {   // <-- change to new Jenkins SSH credential ID
                             sh """
-                                ssh -o StrictHostKeyChecking=no ubuntu@13.50.238.43 '
+                                ssh -o StrictHostKeyChecking=no ubuntu@54.89.241.89 '
                                     docker pull ${DOCKER_USER}/${IMAGE_NAME}:${env.NEW_VERSION} &&
                                     docker stop api-analytics || true &&
                                     docker rm api-analytics || true &&
