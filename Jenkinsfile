@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_USER = 'usmanfarooq317'     // your DockerHub username
-        IMAGE_NAME = 'api-analytics'       // repo name on DockerHub
-        EC2_HOST = '54.89.241.89'          // your EC2 public IP
+        DOCKER_USER = 'usmanfarooq317'     
+        IMAGE_NAME = 'api-analytics'       
+        EC2_HOST = '54.89.241.89'          
     }
 
     stages {
@@ -63,7 +63,7 @@ pipeline {
             echo "🚀 Deployment Successful!"
         }
         failure {
-            echo "❌ Deployment Failed!"
+            echo "❌ Deployment-Failed!"
         }
     }
 }
