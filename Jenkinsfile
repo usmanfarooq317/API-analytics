@@ -69,11 +69,13 @@ pipeline {
         sshagent(['ec2-ssh-key']) {
             sh """
             ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} '
-                # Kill any process using port 5000
+                # Kill any process using port 5000 first
                 fuser -k 5000/tcp || true
 
                 # Stop and remove container if exists
-                docker ps -q --filter "name=api-analytics" | grep -q . && docker rm -f api-analytics || true
+                if [ \$(docker ps -aq -f name=api-analytics) ]; then
+                    docker rm -f api-analytics || true
+                fi
 
                 # Pull latest image
                 docker pull ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}
@@ -85,6 +87,7 @@ pipeline {
         }
     }
 }
+
 
     }
 
