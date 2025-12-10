@@ -1,18 +1,21 @@
 from flask import Flask, render_template, request
 import requests
 import time
-from datetime import datetime, timedelta
 from collections import OrderedDict
+from datetime import datetime, timezone, timedelta
+import os
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 app = Flask(__name__)
 
-# IBM IAM Token URL
-TOKEN_URL = "https://iam.cloud.ibm.com/identity/token"
-API_KEY = "G75K2zUTU93680aujv91-HUn2_gxG8qYEtvJFjfzxaMm"
 
-# URLs
-URL_STAGING = "https://api.8798-f464fa20.eu-de.ri.apiconnect.cloud.ibm.com/analytics/ibm-managed-analytics-service-v2/catalogs/tmfb/dev-catalog/events"
-URL_PRODUCTION = "https://api.8798-f464fa20.eu-de.ri.apiconnect.cloud.ibm.com/analytics/ibm-managed-analytics-service-v2/catalogs/tmfb/gateway/events"
+TOKEN_URL = os.getenv("TOKEN_URL")
+API_KEY = os.getenv("API_KEY")
+URL_STAGING = os.getenv("URL_STAGING")
+URL_PRODUCTION = os.getenv("URL_PRODUCTION")
 
 # Token cache
 cached_token = None
@@ -124,33 +127,31 @@ def analytics():
             reordered_events = []
 
             for ev in events:
-                # Convert datetime to UTC+5 in-place
-                datetime_str = ev.get("datetime")
-                if datetime_str:
-                    try:
-                        utc_dt = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-                        ev["datetime"] = (utc_dt + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
-                    except Exception:
-                        pass
-
-                # Extract X-Channel from headers array
+                # Extract X-Channel
                 x_channel = None
                 for header in ev.get("request_http_headers", []):
                     if "X-Channel" in header:
                         x_channel = header["X-Channel"]
                         break
 
-                # Remove existing X-Channel in API response to avoid duplicates
-                if "X-Channel" in ev:
-                    del ev["X-Channel"]
+                # Convert UTC datetime → Pakistan time + AM/PM
+                original_dt = ev.get("datetime")
+                formatted_dt = None
 
-                # Build ordered dict
+                if original_dt:
+                    try:
+                        utc_dt = datetime.fromisoformat(original_dt.replace("Z", "+00:00"))
+                        pk_dt = utc_dt.astimezone(timezone(timedelta(hours=5)))
+                        formatted_dt = pk_dt.strftime("%Y-%m-%d %I:%M:%S %p")
+                    except:
+                        formatted_dt = original_dt
+
                 ordered = OrderedDict()
                 ordered["api_name"] = ev.get("api_name")
                 ordered["api_resource_id"] = ev.get("api_resource_id")
                 ordered["app_name"] = ev.get("app_name")
                 ordered["X-Channel"] = x_channel
-                ordered["datetime"] = ev.get("datetime")  # Already converted
+                ordered["datetime"] = formatted_dt
                 ordered["global_transaction_id"] = ev.get("global_transaction_id")
                 ordered["request_body"] = ev.get("request_body")
                 ordered["response_body"] = ev.get("response_body")
