@@ -32,7 +32,7 @@ TIMEFRAME_MAP = {
     "24h": "last24hours",
     "7d": "last7days",
     "30d": "last30days",
-    "all-event": "all-event"
+    "all-event": "all"
 }
 
 def get_token():
@@ -130,10 +130,12 @@ def analytics():
                 # Extract X-Channel
                 x_channel = None
                 for header in ev.get("request_http_headers", []):
-                    if "X-Channel" in header:
-                        x_channel = header["X-Channel"]
-                        break
-
+                    for key, value in header.items():
+                        if key.lower() == "x-channel":
+                            x_channel = value
+                            break
+                    if x_channel:
+                             break
                 # Convert UTC datetime → Pakistan time + AM/PM
                 original_dt = ev.get("datetime")
                 formatted_dt = None
